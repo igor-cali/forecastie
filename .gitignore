@@ -16,3 +16,7 @@ captures/
 
 # Misc
 .DS_Store
+
+# Backup files
+_bak/
+

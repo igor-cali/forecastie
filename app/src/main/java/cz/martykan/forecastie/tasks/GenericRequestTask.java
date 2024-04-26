@@ -1,12 +1,13 @@
 package cz.martykan.forecastie.tasks;
 
 import android.annotation.SuppressLint;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import androidx.preference.PreferenceManager;
 
@@ -38,7 +39,7 @@ import cz.martykan.forecastie.weatherapi.WeatherStorage;
 
 public abstract class GenericRequestTask extends AsyncTask<String, String, TaskOutput> {
 
-    final ProgressDialog progressDialog;
+    protected final ProgressBar progressBar;
     protected final Context context;
     protected final MainActivity activity;
     protected final WeatherStorage weatherStorage;
@@ -49,20 +50,20 @@ public abstract class GenericRequestTask extends AsyncTask<String, String, TaskO
     private static boolean certificateFetchTried = false;
     private static SSLContext sslContext;
 
-    public GenericRequestTask(Context context, MainActivity activity, ProgressDialog progressDialog) {
+    public GenericRequestTask(Context context, MainActivity activity, ProgressBar progressBar) {
         this.context = context;
         this.activity = activity;
-        this.progressDialog = progressDialog;
+        this.progressBar = progressBar;
         this.weatherStorage = new WeatherStorage(activity);
     }
 
     @Override
     protected void onPreExecute() {
         incLoadingCounter();
-        if (!progressDialog.isShowing()) {
-            progressDialog.setMessage(context.getString(R.string.downloading_data));
-            progressDialog.setCanceledOnTouchOutside(false);
-            progressDialog.show();
+        if (progressBar.getVisibility() == View.INVISIBLE) {
+            progressBar.setContentDescription(context.getString(R.string.downloading_data));
+//            progressBar.setCanceledOnTouchOutside(false);
+            progressBar.setVisibility(View.VISIBLE);
         }
     }
 
@@ -206,7 +207,7 @@ public abstract class GenericRequestTask extends AsyncTask<String, String, TaskO
     @Override
     protected void onPostExecute(TaskOutput output) {
         if (loading == 1) {
-            progressDialog.dismiss();
+            progressBar.setVisibility(View.INVISIBLE);
         }
         decLoadingCounter();
 

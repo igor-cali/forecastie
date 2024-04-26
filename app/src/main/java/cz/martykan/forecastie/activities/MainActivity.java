@@ -1,9 +1,7 @@
 package cz.martykan.forecastie.activities;
 
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -13,6 +11,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.InputType;
@@ -22,6 +21,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -64,6 +64,7 @@ import cz.martykan.forecastie.fragments.AmbiguousLocationDialogFragment;
 import cz.martykan.forecastie.fragments.RecyclerViewFragment;
 import cz.martykan.forecastie.models.LongTermWeatherList;
 import cz.martykan.forecastie.models.Weather;
+import cz.martykan.forecastie.notifications.WeatherNotificationService;
 import cz.martykan.forecastie.tasks.GenericRequestTask;
 import cz.martykan.forecastie.tasks.ParseResult;
 import cz.martykan.forecastie.tasks.TaskOutput;
@@ -107,7 +108,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
     private View appView;
 
     private LocationManager locationManager;
-    private ProgressDialog progressDialog;
+    private ProgressBar progressBar;
 
     private int theme;
     private boolean widgetTransparent;
@@ -126,6 +127,9 @@ public class MainActivity extends BaseActivity implements LocationListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        showWeatherNotificationIfNeeded();
+
         // Initialize the associated SharedPreferences file with default values
         PreferenceManager.setDefaultValues(this, R.xml.prefs, false);
 
@@ -145,7 +149,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
         AppBarLayout appBarLayout = findViewById(R.id.appBarLayout);
 
-        progressDialog = new ProgressDialog(MainActivity.this);
+        progressBar = new ProgressBar(MainActivity.this);
 
         // Load toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -293,15 +297,15 @@ public class MainActivity extends BaseActivity implements LocationListener {
     private void getTodayUVIndex() {
         double latitude = weatherStorage.getLatitude(Constants.DEFAULT_LAT);
         double longitude = weatherStorage.getLongitude(Constants.DEFAULT_LON);
-        new TodayUVITask(this, this, progressDialog).execute("coords", Double.toString(latitude), Double.toString(longitude));
+        new TodayUVITask(this, this, progressBar).execute("coords", Double.toString(latitude), Double.toString(longitude));
     }
 
     private void getTodayWeather() {
-        new TodayWeatherTask(this, this, progressDialog).execute();
+        new TodayWeatherTask(this, this, progressBar).execute();
     }
 
     private void getLongTermWeather() {
-        new LongTermWeatherTask(this, this, progressDialog).execute();
+        new LongTermWeatherTask(this, this, progressBar).execute();
     }
 
     private void searchCities() {
@@ -322,7 +326,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
             String result = input.getText().toString().trim();
             if (!result.isEmpty()) {
                 new FindCitiesByNameTask(getApplicationContext(),
-                        MainActivity.this, progressDialog).execute("city", result);
+                        MainActivity.this, progressBar).execute("city", result);
             }
         });
         alert.setNegativeButton(R.string.dialog_cancel, (dialog, whichButton) -> {
@@ -625,17 +629,19 @@ public class MainActivity extends BaseActivity implements LocationListener {
 
         } else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ||
                 locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            progressDialog = new ProgressDialog(this);
-            progressDialog.setMessage(getString(R.string.getting_location));
-            progressDialog.setCancelable(false);
-            progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.dialog_cancel), (dialogInterface, i) -> {
+            progressBar = new ProgressBar(this);
+            progressBar.setContentDescription(getString(R.string.getting_location));
+            /*
+            progressBar.setCancelable(false);
+            progressBar.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.dialog_cancel), (dialogInterface, i) -> {
                 try {
                     locationManager.removeUpdates(MainActivity.this);
                 } catch (SecurityException e) {
                     //e.printStackTrace();
                 }
             });
-            progressDialog.show();
+            */
+            progressBar.setVisibility(View.VISIBLE);
             if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                 locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
             }
@@ -673,7 +679,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
 
     @Override
     public void onLocationChanged(@NonNull Location location) {
-        progressDialog.hide();
+        progressBar.setVisibility(View.INVISIBLE);
         try {
             locationManager.removeUpdates(this);
         } catch (SecurityException e) {
@@ -682,7 +688,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
         Log.i("LOCATION (" + Objects.requireNonNull(location.getProvider()).toUpperCase() + ")", location.getLatitude() + ", " + location.getLongitude());
         double latitude = location.getLatitude();
         double longitude = location.getLongitude();
-        new ProvideCityNameTask(this, this, progressDialog).execute("coords", Double.toString(latitude), Double.toString(longitude));
+        new ProvideCityNameTask(this, this, progressBar).execute("coords", Double.toString(latitude), Double.toString(longitude));
     }
 
     @Override
@@ -702,8 +708,8 @@ public class MainActivity extends BaseActivity implements LocationListener {
 
 
     class TodayWeatherTask extends GenericRequestTask {
-        public TodayWeatherTask(Context context, MainActivity activity, ProgressDialog progressDialog) {
-            super(context, activity, progressDialog);
+        public TodayWeatherTask(Context context, MainActivity activity, ProgressBar progressBar) {
+            super(context, activity, progressBar);
         }
 
         @Override
@@ -737,8 +743,8 @@ public class MainActivity extends BaseActivity implements LocationListener {
     }
 
     class LongTermWeatherTask extends GenericRequestTask {
-        public LongTermWeatherTask(Context context, MainActivity activity, ProgressDialog progressDialog) {
-            super(context, activity, progressDialog);
+        public LongTermWeatherTask(Context context, MainActivity activity, ProgressBar progressBar) {
+            super(context, activity, progressBar);
         }
 
         @Override
@@ -759,8 +765,8 @@ public class MainActivity extends BaseActivity implements LocationListener {
 
     class FindCitiesByNameTask extends GenericRequestTask {
 
-        public FindCitiesByNameTask(Context context, MainActivity activity, ProgressDialog progressDialog) {
-            super(context, activity, progressDialog);
+        public FindCitiesByNameTask(Context context, MainActivity activity, ProgressBar progressBar) {
+            super(context, activity, progressBar);
         }
 
         @Override
@@ -823,8 +829,8 @@ public class MainActivity extends BaseActivity implements LocationListener {
 
     class ProvideCityNameTask extends GenericRequestTask {
 
-        public ProvideCityNameTask(Context context, MainActivity activity, ProgressDialog progressDialog) {
-            super(context, activity, progressDialog);
+        public ProvideCityNameTask(Context context, MainActivity activity, ProgressBar progressBar) {
+            super(context, activity, progressBar);
         }
 
         @Override
@@ -868,8 +874,8 @@ public class MainActivity extends BaseActivity implements LocationListener {
     }
 
     class TodayUVITask extends GenericRequestTask {
-        public TodayUVITask(Context context, MainActivity activity, ProgressDialog progressDialog) {
-            super(context, activity, progressDialog);
+        public TodayUVITask(Context context, MainActivity activity, ProgressBar progressBar) {
+            super(context, activity, progressBar);
         }
 
         @Override
@@ -929,5 +935,25 @@ public class MainActivity extends BaseActivity implements LocationListener {
         } else {
             return android.text.format.DateFormat.getDateFormat(context).format(lastCheckedDate) + " " + timeFormat;
         }
+    }
+    private void showWeatherNotificationIfNeeded() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        if (prefs == null)
+            return;
+
+        // we should check permission here because user can update Android version between app launches
+        boolean foregroundServicesPermissionGranted = isForegroundServicesPermissionGranted();
+        boolean isWeatherNotificationEnabled =
+                prefs.getBoolean(getString(R.string.settings_enable_notification_key), false);
+        if (isWeatherNotificationEnabled && foregroundServicesPermissionGranted) {
+            WeatherNotificationService.start(this);
+        }
+    }
+
+    private boolean isForegroundServicesPermissionGranted() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P)
+            return true;    // There is no need for this permission prior Android Pie (Android SDK 28)
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE)
+                == PackageManager.PERMISSION_GRANTED;
     }
 }
