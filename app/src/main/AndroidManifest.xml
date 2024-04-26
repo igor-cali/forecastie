@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="cz.martykan.forecastie">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -19,7 +18,8 @@
 
         <activity
             android:name=".activities.SplashActivity"
-            android:theme="@style/SplashTheme">
+            android:theme="@style/SplashTheme"
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -54,7 +54,8 @@
 
         <!-- Receivers -->
 
-        <receiver android:name=".widgets.ExtensiveWidgetProvider" android:label="@string/widget_label_extensive">
+        <receiver android:name=".widgets.ExtensiveWidgetProvider" android:label="@string/widget_label_extensive"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -64,7 +65,8 @@
                 android:resource="@xml/extensive_widget" />
         </receiver>
 
-        <receiver android:name=".widgets.TimeWidgetProvider" android:label="@string/widget_label_time">
+        <receiver android:name=".widgets.TimeWidgetProvider" android:label="@string/widget_label_time"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -74,7 +76,8 @@
                 android:resource="@xml/time_widget" />
         </receiver>
 
-        <receiver android:name=".widgets.SimpleWidgetProvider" android:label="@string/widget_label_simple">
+        <receiver android:name=".widgets.SimpleWidgetProvider" android:label="@string/widget_label_simple"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -84,7 +87,8 @@
                 android:resource="@xml/simple_widget" />
         </receiver>
 
-        <receiver android:name=".widgets.ClassicTimeWidgetProvider" android:label="@string/widget_label_classic">
+        <receiver android:name=".widgets.ClassicTimeWidgetProvider" android:label="@string/widget_label_classic"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -94,7 +98,8 @@
                 android:resource="@xml/time_widget_classic" />
         </receiver>
 
-        <receiver android:name=".AlarmReceiver">
+        <receiver android:name=".AlarmReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.PACKAGE_REPLACED" />

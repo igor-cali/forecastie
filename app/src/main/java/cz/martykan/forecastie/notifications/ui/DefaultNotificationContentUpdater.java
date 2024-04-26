@@ -1,6 +1,7 @@
 package cz.martykan.forecastie.notifications.ui;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -59,7 +60,7 @@ public class DefaultNotificationContentUpdater extends NotificationContentUpdate
         } else {
             notification.setContentTitle(context.getString(R.string.no_data))
                     .setContentText(null)
-                    .setLargeIcon(null);
+                    .setLargeIcon((Bitmap) null);
         }
     }
 }
