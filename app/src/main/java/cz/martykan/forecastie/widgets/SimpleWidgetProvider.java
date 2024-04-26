@@ -24,7 +24,7 @@ public class SimpleWidgetProvider extends AbstractWidgetProvider {
 
             Intent intent = new Intent(context, AlarmReceiver.class);
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context,
-                    0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             remoteViews.setOnClickPendingIntent(R.id.widgetButtonRefresh, pendingIntent);
 
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
