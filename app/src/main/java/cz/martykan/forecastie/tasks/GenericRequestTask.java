@@ -3,7 +3,6 @@ package cz.martykan.forecastie.tasks;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
 import android.view.View;
@@ -37,7 +36,7 @@ import cz.martykan.forecastie.utils.Language;
 import cz.martykan.forecastie.utils.certificate.CertificateUtils;
 import cz.martykan.forecastie.weatherapi.WeatherStorage;
 
-public abstract class GenericRequestTask extends AsyncTask<String, String, TaskOutput> {
+public abstract class GenericRequestTask {
 
     protected final ProgressBar progressBar;
     protected final Context context;
@@ -57,7 +56,18 @@ public abstract class GenericRequestTask extends AsyncTask<String, String, TaskO
         this.weatherStorage = new WeatherStorage(activity);
     }
 
-    @Override
+    private void startBackground(TaskOutput output, String... params) {
+        new Thread(() -> {
+
+            doInBackground(params);
+            activity.runOnUiThread(() -> onPostExecute(output));
+        }).start();
+    }
+    public void execute(TaskOutput output, String... params){
+        startBackground(output, params);
+    }
+
+//    @Override
     protected void onPreExecute() {
         incLoadingCounter();
         if (progressBar.getVisibility() == View.INVISIBLE) {
@@ -67,8 +77,8 @@ public abstract class GenericRequestTask extends AsyncTask<String, String, TaskO
         }
     }
 
-    @Override
-    protected TaskOutput doInBackground(String... params) {
+//    @Override
+    protected /*TaskOutput*/void doInBackground(String... params) {
         TaskOutput output = new TaskOutput();
 
         String response = "";
@@ -107,7 +117,7 @@ public abstract class GenericRequestTask extends AsyncTask<String, String, TaskO
             output.parseResult = parseResult;
         }
 
-        return output;
+//        return output;
     }
 
     private String makeRequest(TaskOutput output, String response, String[] reqParams) {
@@ -204,7 +214,7 @@ public abstract class GenericRequestTask extends AsyncTask<String, String, TaskO
         return response;
     }
 
-    @Override
+//    @Override
     protected void onPostExecute(TaskOutput output) {
         if (loading == 1) {
             progressBar.setVisibility(View.INVISIBLE);
@@ -217,27 +227,29 @@ public abstract class GenericRequestTask extends AsyncTask<String, String, TaskO
     }
 
     protected final void handleTaskOutput(TaskOutput output) {
-        switch (output.taskResult) {
-            case SUCCESS:
-                ParseResult parseResult = output.parseResult;
-                if (ParseResult.CITY_NOT_FOUND.equals(parseResult)) {
-                    Snackbar.make(activity.findViewById(android.R.id.content), context.getString(R.string.msg_city_not_found), Snackbar.LENGTH_LONG).show();
-                } else if (ParseResult.JSON_EXCEPTION.equals(parseResult)) {
-                    Snackbar.make(activity.findViewById(android.R.id.content), context.getString(R.string.msg_err_parsing_json), Snackbar.LENGTH_LONG).show();
-                }
-                break;
-            case TOO_MANY_REQUESTS:
-                Snackbar.make(activity.findViewById(android.R.id.content), context.getString(R.string.msg_too_many_requests), Snackbar.LENGTH_LONG).show();
-                break;
-            case INVALID_API_KEY:
-                Snackbar.make(activity.findViewById(android.R.id.content), context.getString(R.string.msg_invalid_api_key), Snackbar.LENGTH_LONG).show();
-                break;
-            case HTTP_ERROR:
-                Snackbar.make(activity.findViewById(android.R.id.content), context.getString(R.string.msg_http_error), Snackbar.LENGTH_LONG).show();
-                break;
-            case IO_EXCEPTION:
-                Snackbar.make(activity.findViewById(android.R.id.content), context.getString(R.string.msg_connection_not_available), Snackbar.LENGTH_LONG).show();
-                break;
+        if(output != null) {
+            switch (output.taskResult) {
+                case SUCCESS:
+                    ParseResult parseResult = output.parseResult;
+                    if (ParseResult.CITY_NOT_FOUND.equals(parseResult)) {
+                        Snackbar.make(activity.findViewById(android.R.id.content), context.getString(R.string.msg_city_not_found), Snackbar.LENGTH_LONG).show();
+                    } else if (ParseResult.JSON_EXCEPTION.equals(parseResult)) {
+                        Snackbar.make(activity.findViewById(android.R.id.content), context.getString(R.string.msg_err_parsing_json), Snackbar.LENGTH_LONG).show();
+                    }
+                    break;
+                case TOO_MANY_REQUESTS:
+                    Snackbar.make(activity.findViewById(android.R.id.content), context.getString(R.string.msg_too_many_requests), Snackbar.LENGTH_LONG).show();
+                    break;
+                case INVALID_API_KEY:
+                    Snackbar.make(activity.findViewById(android.R.id.content), context.getString(R.string.msg_invalid_api_key), Snackbar.LENGTH_LONG).show();
+                    break;
+                case HTTP_ERROR:
+                    Snackbar.make(activity.findViewById(android.R.id.content), context.getString(R.string.msg_http_error), Snackbar.LENGTH_LONG).show();
+                    break;
+                case IO_EXCEPTION:
+                    Snackbar.make(activity.findViewById(android.R.id.content), context.getString(R.string.msg_connection_not_available), Snackbar.LENGTH_LONG).show();
+                    break;
+            }
         }
     }
 

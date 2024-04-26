@@ -297,15 +297,15 @@ public class MainActivity extends BaseActivity implements LocationListener {
     private void getTodayUVIndex() {
         double latitude = weatherStorage.getLatitude(Constants.DEFAULT_LAT);
         double longitude = weatherStorage.getLongitude(Constants.DEFAULT_LON);
-        new TodayUVITask(this, this, progressBar).execute("coords", Double.toString(latitude), Double.toString(longitude));
+        new TodayUVITask(this, this, progressBar).execute(null, "coords", Double.toString(latitude), Double.toString(longitude));
     }
 
     private void getTodayWeather() {
-        new TodayWeatherTask(this, this, progressBar).execute();
+        new TodayWeatherTask(this, this, progressBar).execute(null, (String) null);
     }
 
     private void getLongTermWeather() {
-        new LongTermWeatherTask(this, this, progressBar).execute();
+        new LongTermWeatherTask(this, this, progressBar).execute(null, (String) null);
     }
 
     private void searchCities() {
@@ -326,7 +326,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
             String result = input.getText().toString().trim();
             if (!result.isEmpty()) {
                 new FindCitiesByNameTask(getApplicationContext(),
-                        MainActivity.this, progressBar).execute("city", result);
+                        MainActivity.this, progressBar).execute(null, "city", result);
             }
         });
         alert.setNegativeButton(R.string.dialog_cancel, (dialog, whichButton) -> {
@@ -415,24 +415,33 @@ public class MainActivity extends BaseActivity implements LocationListener {
         // Pressure
         double pressure = UnitConvertor.convertPressure(todayWeather.getPressure(), sp);
 
-        todayTemperature.setText(new DecimalFormat("0.#").format(temperature) + " " + sp.getString("unit", "°C"));
-        todayDescription.setText(todayWeather.getDescription().substring(0, 1).toUpperCase() +
-                todayWeather.getDescription().substring(1) + rainString);
+        String str = new DecimalFormat("0.#").format(temperature) + " " + sp.getString("unit", "°C");
+        todayTemperature.setText(str);
+        str = todayWeather.getDescription().substring(0, 1).toUpperCase() +
+            todayWeather.getDescription().substring(1) + rainString;
+        todayDescription.setText(str);
         if (sp.getString("speedUnit", "m/s").equals("bft")) {
-            todayWind.setText(getString(R.string.wind) + ": " +
-                    UnitConvertor.getBeaufortName((int) wind, this) +
-                    (todayWeather.isWindDirectionAvailable() ? " " + getWindDirectionString(sp, this, todayWeather) : ""));
+            str = getString(R.string.wind) + ": " +
+                UnitConvertor.getBeaufortName((int) wind, this) +
+                (todayWeather.isWindDirectionAvailable() ? " " + getWindDirectionString(sp, this, todayWeather) : "");
+            todayWind.setText(str);
         } else {
-            todayWind.setText(getString(R.string.wind) + ": " + new DecimalFormat("0.0").format(wind) + " " +
-                    localize(sp, "speedUnit", "m/s") +
-                    (todayWeather.isWindDirectionAvailable() ? " " + getWindDirectionString(sp, this, todayWeather) : ""));
+            str = getString(R.string.wind) + ": " + new DecimalFormat("0.0").format(wind) + " " +
+                localize(sp, "speedUnit", "m/s") +
+                (todayWeather.isWindDirectionAvailable() ? " " + getWindDirectionString(sp, this, todayWeather) : "");
+            todayWind.setText(str);
         }
-        todayPressure.setText(getString(R.string.pressure) + ": " + new DecimalFormat("0.0").format(pressure) + " " +
-                localize(sp, "pressureUnit", "hPa"));
-        todayHumidity.setText(getString(R.string.humidity) + ": " + todayWeather.getHumidity() + " %");
-        todaySunrise.setText(getString(R.string.sunrise) + ": " + timeFormat.format(todayWeather.getSunrise()));
-        todaySunset.setText(getString(R.string.sunset) + ": " + timeFormat.format(todayWeather.getSunset()));
-        todayIcon.setText(this.formatting.getWeatherIcon(todayWeather.getWeatherId(), TimeUtils.isDayTime(todayWeather, Calendar.getInstance())));
+        str = getString(R.string.pressure) + ": " + new DecimalFormat("0.0").format(pressure) + " " +
+            localize(sp, "pressureUnit", "hPa");
+        todayPressure.setText(str);
+        str = getString(R.string.humidity) + ": " + todayWeather.getHumidity() + " %";
+        todayHumidity.setText(str);
+        str = getString(R.string.sunrise) + ": " + timeFormat.format(todayWeather.getSunrise());
+        todaySunrise.setText(str);
+        str = getString(R.string.sunset) + ": " + timeFormat.format(todayWeather.getSunset());
+        todaySunset.setText(str);
+        str = this.formatting.getWeatherIcon(todayWeather.getWeatherId(), TimeUtils.isDayTime(todayWeather, Calendar.getInstance()));
+        todayIcon.setText(str);
 
         linearLayoutTapForGraphs.setOnClickListener(view -> {
             Intent intent = new Intent(MainActivity.this, GraphActivity.class);
@@ -443,7 +452,8 @@ public class MainActivity extends BaseActivity implements LocationListener {
     private void updateUVIndexUI() {
         // UV Index
         double uvIndex = todayWeather.getUvIndex();
-        todayUvIndex.setText(getString(R.string.uvindex) + ": " + uvIndex + " (" + UnitConvertor.convertUvIndexToRiskLevel(uvIndex, this) + ")");
+        String str = getString(R.string.uvindex) + ": " + uvIndex + " (" + UnitConvertor.convertUvIndexToRiskLevel(uvIndex, this) + ")";
+        todayUvIndex.setText(str);
     }
 
     public ParseResult parseLongTermJson(String result) {
@@ -502,7 +512,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
     }
 
     private boolean shouldUpdate() {
@@ -688,7 +698,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
         Log.i("LOCATION (" + Objects.requireNonNull(location.getProvider()).toUpperCase() + ")", location.getLatitude() + ", " + location.getLongitude());
         double latitude = location.getLatitude();
         double longitude = location.getLongitude();
-        new ProvideCityNameTask(this, this, progressBar).execute("coords", Double.toString(latitude), Double.toString(longitude));
+        new ProvideCityNameTask(this, this, progressBar).execute(null, "coords", Double.toString(latitude), Double.toString(longitude));
     }
 
     @Override
