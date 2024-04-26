@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,7 +24,7 @@ import cz.martykan.forecastie.utils.formatters.WeatherFormatterType;
 /**
  * Observe change in the Shared Preferences and update WeatherPresentation when weather info or
  * settings how to show weather is changed.
- *
+ * <p>
  * Implementation Note: Observer pattern is preferable than use of startService with data in
  * Intent when some class updates data because Observer pattern grants us one source of truth.
  */
@@ -85,7 +85,7 @@ public class WeatherRepository {
 
     /**
      * Clear resources.
-     *
+     * <p>
      * NOTE: do NOT use {@link #observeWeather(RepositoryListener)} after this call.
      */
     public void clear() {
@@ -198,7 +198,7 @@ public class WeatherRepository {
                     case "lastUpdate":
                     case "lastToday":
                         String json = sharedPreferences.getString("lastToday", "");
-                        if (json != null && !json.isEmpty()) {
+                        if (! json.isEmpty()) {
                             long lastUpdate = sharedPreferences.getLong("lastUpdate", -1L);
                             ImmutableWeather weather = ImmutableWeather.fromJson(json, lastUpdate);
                             result = weatherPresentation.copy(weather);
@@ -212,30 +212,22 @@ public class WeatherRepository {
                     case "unit":
                         String temperatureUnits = sharedPreferences.getString(key,
                                 WeatherPresentation.DEFAULT_TEMPERATURE_UNITS);
-                        if (temperatureUnits != null) {
-                            result = weatherPresentation.copyTemperatureUnits(temperatureUnits);
-                        }
+                        result = weatherPresentation.copyTemperatureUnits(temperatureUnits);
                         break;
                     case "speedUnit":
                         String windSpeedUnits = sharedPreferences.getString(key,
                                 WeatherPresentation.DEFAULT_WIND_SPEED_UNITS);
-                        if (windSpeedUnits != null) {
-                            result = weatherPresentation.copyWindSpeedUnits(windSpeedUnits);
-                        }
+                        result = weatherPresentation.copyWindSpeedUnits(windSpeedUnits);
                         break;
                     case "windDirectionFormat":
                         String windDirectionFormat = sharedPreferences.getString(key,
                                 WeatherPresentation.DEFAULT_WIND_DIRECTION_FORMAT);
-                        if (windDirectionFormat != null) {
-                            result = weatherPresentation.copyWindDirectionFormat(windDirectionFormat);
-                        }
+                        result = weatherPresentation.copyWindDirectionFormat(windDirectionFormat);
                         break;
                     case "pressureUnit":
                         String pressureUnits = sharedPreferences.getString(key,
                                 WeatherPresentation.DEFAULT_PRESSURE_UNITS);
-                        if (pressureUnits != null) {
-                            result = weatherPresentation.copyPressureUnits(pressureUnits);
-                        }
+                        result = weatherPresentation.copyPressureUnits(pressureUnits);
                         break;
 
                     default:

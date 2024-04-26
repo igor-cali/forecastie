@@ -1,11 +1,13 @@
 package cz.martykan.forecastie.notifications.repository;
 
+import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Looper;
-import android.preference.PreferenceManager;
 
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Assert;
@@ -21,8 +23,6 @@ import cz.martykan.forecastie.R;
 import cz.martykan.forecastie.models.ImmutableWeather;
 import cz.martykan.forecastie.models.WeatherPresentation;
 import cz.martykan.forecastie.utils.formatters.WeatherFormatterType;
-
-import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 @SuppressWarnings("UnstableApiUsage")
 @RunWith(AndroidJUnit4.class)
@@ -45,12 +45,7 @@ public class WeatherRepositoryTests {
         final WeatherPresentation[] actual = new WeatherPresentation[1];
         WeatherRepository repository = new WeatherRepository(context, executor);
 
-        repository.observeWeather(new WeatherRepository.RepositoryListener() {
-            @Override
-            public void onChange(@NonNull WeatherPresentation newData) {
-                actual[0] = newData;
-            }
-        });
+        repository.observeWeather(newData -> actual[0] = newData);
         executor.runAll();
         Shadows.shadowOf(Looper.getMainLooper()).idle();
 
@@ -87,12 +82,7 @@ public class WeatherRepositoryTests {
         final WeatherPresentation[] actual = new WeatherPresentation[1];
         WeatherRepository repository = new WeatherRepository(context, executor);
 
-        repository.observeWeather(new WeatherRepository.RepositoryListener() {
-            @Override
-            public void onChange(@NonNull WeatherPresentation newData) {
-                actual[0] = newData;
-            }
-        });
+        repository.observeWeather(newData -> actual[0] = newData);
         executor.runAll();
         Shadows.shadowOf(Looper.getMainLooper()).idle();
 
@@ -123,12 +113,7 @@ public class WeatherRepositoryTests {
         String pressureUnit = "in Hg";
         final WeatherPresentation[] actual = new WeatherPresentation[1];
         WeatherRepository repository = new WeatherRepository(context, executor);
-        repository.observeWeather(new WeatherRepository.RepositoryListener() {
-            @Override
-            public void onChange(@NonNull WeatherPresentation newData) {
-                actual[0] = newData;
-            }
-        });
+        repository.observeWeather(newData -> actual[0] = newData);
 
         prefs.edit()
                 .putString("lastToday", "{\"main\": {\"temp\": 315.25}}")
@@ -206,18 +191,8 @@ public class WeatherRepositoryTests {
     public void observeWeatherEmitsNewValuesInEveryListener() {
         final WeatherPresentation[] actual = new WeatherPresentation[2];
         WeatherRepository repository = new WeatherRepository(context, executor);
-        repository.observeWeather(new WeatherRepository.RepositoryListener() {
-            @Override
-            public void onChange(@NonNull WeatherPresentation newData) {
-                actual[0] = newData;
-            }
-        });
-        repository.observeWeather(new WeatherRepository.RepositoryListener() {
-            @Override
-            public void onChange(@NonNull WeatherPresentation newData) {
-                actual[1] = newData;
-            }
-        });
+        repository.observeWeather(newData -> actual[0] = newData);
+        repository.observeWeather(newData -> actual[1] = newData);
 
         prefs.edit()
                 .putString("lastToday", "{\"main\": {\"temp\": 315.25}}")

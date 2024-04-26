@@ -21,24 +21,10 @@ public class DefaultNotificationContentUpdater extends NotificationContentUpdate
     }
 
     @Override
-    public boolean isLayoutCustom() {
-        return false;
-    }
-
-    @Override
     public void updateNotification(@NonNull WeatherPresentation weatherPresentation,
                                    @NonNull NotificationCompat.Builder notification,
                                    @NonNull Context context
     ) throws NullPointerException {
-        //noinspection ConstantConditions
-        if (weatherPresentation == null)
-            throw new NullPointerException("weatherPresentation is null");
-        //noinspection ConstantConditions
-        if (notification == null)
-            throw new NullPointerException("notification is null");
-        //noinspection ConstantConditions
-        if (context == null)
-            throw new NullPointerException("context is null");
 
         super.updateNotification(weatherPresentation, notification, context);
 

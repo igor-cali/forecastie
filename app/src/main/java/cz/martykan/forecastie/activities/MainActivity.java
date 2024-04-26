@@ -14,7 +14,6 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.text.InputType;
 import android.util.Log;
@@ -32,6 +31,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.preference.PreferenceManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewpager.widget.ViewPager;
 
@@ -52,6 +52,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import cz.martykan.forecastie.AlarmReceiver;
 import cz.martykan.forecastie.Constants;
@@ -81,8 +82,8 @@ public class MainActivity extends BaseActivity implements LocationListener {
     // Time in milliseconds; only reload weather if last update is longer ago than this value
     private static final int NO_UPDATE_REQUIRED_THRESHOLD = 300000;
 
-    private static Map<String, Integer> speedUnits = new HashMap<>(3);
-    private static Map<String, Integer> pressUnits = new HashMap<>(3);
+    private static final Map<String, Integer> speedUnits = new HashMap<>(3);
+    private static final Map<String, Integer> pressUnits = new HashMap<>(3);
     private static boolean mappingsInitialised = false;
 
     @NonNull
@@ -132,7 +133,6 @@ public class MainActivity extends BaseActivity implements LocationListener {
         firstRun = prefs.getBoolean("firstRun", true);
 
         widgetTransparent = prefs.getBoolean("transparentWidget", false);
-        //noinspection ConstantConditions
         setTheme(theme = UI.getTheme(prefs.getString("theme", "fresh")));
         boolean darkTheme = super.darkTheme;
         boolean blackTheme = super.blackTheme;
@@ -156,7 +156,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
             toolbar.setPopupTheme(R.style.AppTheme_PopupOverlay_Black);
         }
 
-        // Initialize textboxes
+        // Initialize text-boxes
         todayTemperature = findViewById(R.id.todayTemperature);
         todayDescription = findViewById(R.id.todayDescription);
         todayWind = findViewById(R.id.todayWind);
@@ -186,24 +186,18 @@ public class MainActivity extends BaseActivity implements LocationListener {
         preloadWeather();
         updateLastUpdateTime();
 
-        // Set autoupdater
+        // Set auto updater
         AlarmReceiver.setRecurringAlarm(this);
 
 
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                refreshWeather();
-                swipeRefreshLayout.setRefreshing(false);
-            }
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            refreshWeather();
+            swipeRefreshLayout.setRefreshing(false);
         });
 
-        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-            @Override
-            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-                // Only allow pull to refresh when scrolled to top
-                swipeRefreshLayout.setEnabled(verticalOffset == 0);
-            }
+        appBarLayout.addOnOffsetChangedListener((appBarLayout1, verticalOffset) -> {
+            // Only allow pull to refresh when scrolled to top
+            swipeRefreshLayout.setEnabled(verticalOffset == 0);
         });
     }
 
@@ -240,12 +234,11 @@ public class MainActivity extends BaseActivity implements LocationListener {
     @Override
     public void onResume() {
         super.onResume();
-        //noinspection ConstantConditions
         if (UI.getTheme(prefs.getString("theme", "fresh")) != theme ||
                 PreferenceManager.getDefaultSharedPreferences(this).getBoolean("transparentWidget", false) != widgetTransparent) {
             // Restart activity to apply theme
             overridePendingTransition(0, 0);
-            prefs.edit().putBoolean("firstRun", true).commit();
+            prefs.edit().putBoolean("firstRun", true).apply();
             finish();
             overridePendingTransition(0, 0);
             startActivity(getIntent());
@@ -256,7 +249,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
         }
         if (firstRun) {
             tapGraph.setText(getString(R.string.tap_for_graphs));
-            prefs.edit().putBoolean("firstRun",false).commit();
+            prefs.edit().putBoolean("firstRun",false).apply();
         }
     }
 
@@ -269,7 +262,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
             try {
                 locationManager.removeUpdates(MainActivity.this);
             } catch (SecurityException e) {
-                e.printStackTrace();
+                //e.printStackTrace();
             }
         }
     }
@@ -325,19 +318,15 @@ public class MainActivity extends BaseActivity implements LocationListener {
         alert.setTitle(this.getString(R.string.search_title));
         alert.setView(inputLayout);
 
-        alert.setPositiveButton(R.string.dialog_ok, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                String result = input.getText().toString().trim();
-                if (!result.isEmpty()) {
-                    new FindCitiesByNameTask(getApplicationContext(),
-                            MainActivity.this, progressDialog).execute("city", result);
-                }
+        alert.setPositiveButton(R.string.dialog_ok, (dialog, whichButton) -> {
+            String result = input.getText().toString().trim();
+            if (!result.isEmpty()) {
+                new FindCitiesByNameTask(getApplicationContext(),
+                        MainActivity.this, progressDialog).execute("city", result);
             }
         });
-        alert.setNegativeButton(R.string.dialog_cancel, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                // Cancelled
-            }
+        alert.setNegativeButton(R.string.dialog_cancel, (dialog, whichButton) -> {
+            // Cancelled
         });
         alert.show();
     }
@@ -345,19 +334,13 @@ public class MainActivity extends BaseActivity implements LocationListener {
     private void saveLocation(int cityId) {
         recentCityId = weatherStorage.getCityId();
         weatherStorage.setCityId(cityId);
-
-//        if (!recentCityId.equals(result)) {
-//            // New location, update weather
-//            getTodayWeather();
-//            getLongTermWeather();
-//            getTodayUVIndex();
-//        }
     }
 
     private void aboutDialog() {
         new AboutDialogFragment().show(getSupportFragmentManager(), null);
     }
 
+    /*
     public static String getRainString(JSONObject rainObj) {
         String rain = "0";
         if (rainObj != null) {
@@ -368,6 +351,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
         }
         return rain;
     }
+    */
 
     private ParseResult parseTodayJson(String result) {
         try {
@@ -380,7 +364,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
             weatherStorage.setLongitude(todayWeather.getLon());
         } catch (JSONException e) {
             Log.e("JSONException Data", result);
-            e.printStackTrace();
+            //e.printStackTrace();
             return ParseResult.JSON_EXCEPTION;
         }
 
@@ -394,7 +378,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
             weatherStorage.setLastUviToday(result);
         } catch (JSONException e) {
             Log.e("JSONException Data", result);
-            e.printStackTrace();
+            //e.printStackTrace();
             return ParseResult.JSON_EXCEPTION;
         }
 
@@ -446,12 +430,9 @@ public class MainActivity extends BaseActivity implements LocationListener {
         todaySunset.setText(getString(R.string.sunset) + ": " + timeFormat.format(todayWeather.getSunset()));
         todayIcon.setText(this.formatting.getWeatherIcon(todayWeather.getWeatherId(), TimeUtils.isDayTime(todayWeather, Calendar.getInstance())));
 
-        linearLayoutTapForGraphs.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, GraphActivity.class);
-                startActivity(intent);
-            }
+        linearLayoutTapForGraphs.setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, GraphActivity.class);
+            startActivity(intent);
         });
     }
 
@@ -470,7 +451,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
             longTermWeatherList.addAll(weatherList);
         } catch (JSONException e) {
             Log.e("JSONException Data", result);
-            e.printStackTrace();
+            //e.printStackTrace();
             return ParseResult.JSON_EXCEPTION;
         }
 
@@ -602,12 +583,10 @@ public class MainActivity extends BaseActivity implements LocationListener {
         String result = preferenceValue;
         if ("speedUnit".equals(preferenceKey)) {
             if (speedUnits.containsKey(preferenceValue)) {
-                //noinspection ConstantConditions
                 result = context.getString(speedUnits.get(preferenceValue));
             }
         } else if ("pressureUnit".equals(preferenceKey)) {
             if (pressUnits.containsKey(preferenceValue)) {
-                //noinspection ConstantConditions
                 result = context.getString(pressUnits.get(preferenceValue));
             }
         }
@@ -625,7 +604,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 
         return "";
@@ -649,14 +628,11 @@ public class MainActivity extends BaseActivity implements LocationListener {
             progressDialog = new ProgressDialog(this);
             progressDialog.setMessage(getString(R.string.getting_location));
             progressDialog.setCancelable(false);
-            progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.dialog_cancel), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    try {
-                        locationManager.removeUpdates(MainActivity.this);
-                    } catch (SecurityException e) {
-                        e.printStackTrace();
-                    }
+            progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.dialog_cancel), (dialogInterface, i) -> {
+                try {
+                    locationManager.removeUpdates(MainActivity.this);
+                } catch (SecurityException e) {
+                    //e.printStackTrace();
                 }
             });
             progressDialog.show();
@@ -675,23 +651,18 @@ public class MainActivity extends BaseActivity implements LocationListener {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
         alertDialog.setTitle(R.string.location_settings);
         alertDialog.setMessage(R.string.location_settings_message);
-        alertDialog.setPositiveButton(R.string.location_settings_button, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                startActivity(intent);
-            }
+        alertDialog.setPositiveButton(R.string.location_settings_button, (dialog, which) -> {
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
         });
-        alertDialog.setNegativeButton(R.string.dialog_cancel, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
+        alertDialog.setNegativeButton(R.string.dialog_cancel, (dialog, which) -> dialog.cancel());
         alertDialog.show();
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == MY_PERMISSIONS_ACCESS_FINE_LOCATION) {
             // If request is cancelled, the result arrays are empty.
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -701,14 +672,14 @@ public class MainActivity extends BaseActivity implements LocationListener {
     }
 
     @Override
-    public void onLocationChanged(Location location) {
+    public void onLocationChanged(@NonNull Location location) {
         progressDialog.hide();
         try {
             locationManager.removeUpdates(this);
         } catch (SecurityException e) {
             Log.e("LocationManager", "Error while trying to stop listening for location updates. This is probably a permissions issue", e);
         }
-        Log.i("LOCATION (" + location.getProvider().toUpperCase() + ")", location.getLatitude() + ", " + location.getLongitude());
+        Log.i("LOCATION (" + Objects.requireNonNull(location.getProvider()).toUpperCase() + ")", location.getLatitude() + ", " + location.getLongitude());
         double latitude = location.getLatitude();
         double longitude = location.getLongitude();
         new ProvideCityNameTask(this, this, progressDialog).execute("coords", Double.toString(latitude), Double.toString(longitude));
@@ -720,12 +691,12 @@ public class MainActivity extends BaseActivity implements LocationListener {
     }
 
     @Override
-    public void onProviderEnabled(String provider) {
+    public void onProviderEnabled(@NonNull String provider) {
 
     }
 
     @Override
-    public void onProviderDisabled(String provider) {
+    public void onProviderDisabled(@NonNull String provider) {
 
     }
 
@@ -817,7 +788,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
 
             } catch (JSONException e) {
                 Log.e("JSONException Data", response);
-                e.printStackTrace();
+                //e.printStackTrace();
                 return ParseResult.JSON_EXCEPTION;
             }
 
@@ -866,7 +837,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
 
         @Override
         protected ParseResult parseResponse(String response) {
-            Log.i("RESULT", response.toString());
+            Log.i("RESULT", response);
             try {
                 JSONObject reader = new JSONObject(response);
 
@@ -880,7 +851,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
 
             } catch (JSONException e) {
                 Log.e("JSONException Data", response);
-                e.printStackTrace();
+                //e.printStackTrace();
                 return ParseResult.JSON_EXCEPTION;
             }
 
@@ -926,7 +897,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
     public static long saveLastUpdateTime(SharedPreferences sp) {
         Calendar now = Calendar.getInstance();
         long lastUpdate = now.getTimeInMillis();
-        sp.edit().putLong("lastUpdate", lastUpdate).commit();
+        sp.edit().putLong("lastUpdate", lastUpdate).apply();
         return lastUpdate;
     }
 

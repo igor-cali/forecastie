@@ -3,15 +3,13 @@ package cz.martykan.forecastie.activities;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.MenuItem;
-import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -24,7 +22,6 @@ public class MapActivity extends BaseActivity {
 
     private WebView webView;
     private MapViewModel mapViewModel;
-    private WeatherStorage weatherStorage;
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
@@ -33,11 +30,10 @@ public class MapActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
-        //noinspection ConstantConditions
         setTheme(theme = UI.getTheme(prefs.getString("theme", "fresh")));
         mapViewModel = new ViewModelProvider(this).get(MapViewModel.class);
 
-        weatherStorage = new WeatherStorage(this);
+        WeatherStorage weatherStorage = new WeatherStorage(this);
 
         if (savedInstanceState == null) {
             mapViewModel.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -51,7 +47,7 @@ public class MapActivity extends BaseActivity {
         webView.loadUrl("file:///android_asset/map.html?lat=" + mapViewModel.mapLat + "&lon="
                 + mapViewModel.mapLon + "&appid=" + mapViewModel.apiKey
                 + "&zoom=" + mapViewModel.mapZoom + "&displayPin=true");
-        webView.addJavascriptInterface(new HybridInterface(), "NativeInterface");
+//        webView.addJavascriptInterface(new HybridInterface(), "NativeInterface");
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
@@ -64,14 +60,11 @@ public class MapActivity extends BaseActivity {
         });
 
         BottomNavigationView bottomBar = findViewById(R.id.navigationBar);
-        bottomBar.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                int i = item.getItemId();
-                setMapState(i);
-                mapViewModel.tabPosition = i;
-                return true;
-            }
+        bottomBar.setOnNavigationItemSelectedListener(item -> {
+            int i = item.getItemId();
+            setMapState(i);
+            mapViewModel.tabPosition = i;
+            return true;
         });
 
     }
@@ -105,6 +98,7 @@ public class MapActivity extends BaseActivity {
         super.onSaveInstanceState(outState);
     }
 
+    /*
     private class HybridInterface {
 
         @JavascriptInterface
@@ -118,5 +112,6 @@ public class MapActivity extends BaseActivity {
             mapViewModel.mapZoom = level;
         }
     }
+    */
 
 }

@@ -2,10 +2,10 @@ package cz.martykan.forecastie.weatherapi;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.preference.PreferenceManager;
 
 import org.json.JSONException;
 
@@ -16,7 +16,7 @@ import cz.martykan.forecastie.models.Weather;
 import cz.martykan.forecastie.weatherapi.owm.OpenWeatherMapJsonParser;
 
 public class WeatherStorage {
-    protected SharedPreferences sharedPreferences;
+    protected final SharedPreferences sharedPreferences;
 
     public WeatherStorage(Context context) {
         this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
@@ -43,7 +43,7 @@ public class WeatherStorage {
             return OpenWeatherMapJsonParser.convertJsonToWeather(lastToday);
         } catch (JSONException e) {
             Log.e("WeatherStorage", "Could not parse today JSON", e);
-            e.printStackTrace();
+            //e.printStackTrace();
             return null;
         }
     }
@@ -63,7 +63,7 @@ public class WeatherStorage {
             return OpenWeatherMapJsonParser.convertJsonToWeatherList(lastLongTerm);
         } catch (JSONException e) {
             Log.e("WeatherStorage", "Could not parse long term JSON", e);
-            e.printStackTrace();
+            //e.printStackTrace();
             return null;
         }
     }
@@ -84,7 +84,7 @@ public class WeatherStorage {
             return OpenWeatherMapJsonParser.convertJsonToUVIndex(lastUviToday);
         } catch (JSONException e) {
             Log.e("WeatherStorage", "Could not parse UV index JSON", e);
-            e.printStackTrace();
+            //e.printStackTrace();
             return null;
         }
     }

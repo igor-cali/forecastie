@@ -5,13 +5,14 @@ import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
-import android.preference.PreferenceManager;
 import android.widget.RemoteViews;
+
+import androidx.preference.PreferenceManager;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import cz.martykan.forecastie.AlarmReceiver;
 import cz.martykan.forecastie.R;
@@ -28,7 +29,7 @@ public class TimeWidgetProvider extends AbstractWidgetProvider {
 
             Intent intent = new Intent(context, AlarmReceiver.class);
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context,
-                    0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             remoteViews.setOnClickPendingIntent(R.id.widgetButtonRefresh, pendingIntent);
 
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
@@ -49,7 +50,7 @@ public class TimeWidgetProvider extends AbstractWidgetProvider {
             try {
                 simpleDateFormat = simpleDateFormat.substring(0, simpleDateFormat.indexOf("-") - 1);
                 try {
-                    SimpleDateFormat resultFormat = new SimpleDateFormat(simpleDateFormat);
+                    SimpleDateFormat resultFormat = new SimpleDateFormat(simpleDateFormat, Locale.US);
                     dateString = resultFormat.format(new Date());
                 } catch (IllegalArgumentException e) {
                     dateString = context.getResources().getString(R.string.error_dateFormat);
@@ -66,10 +67,8 @@ public class TimeWidgetProvider extends AbstractWidgetProvider {
             remoteViews.setTextViewText(R.id.widgetDescription, widgetWeather.getDescription());
             remoteViews.setImageViewBitmap(R.id.widgetIcon, getWeatherIcon(widgetWeather, context));
 
-            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                if (dateString.length() > 19)
-                    remoteViews.setViewPadding(R.id.widgetIcon, 40, 0, 0, 0);
-            }
+            if (dateString.length() > 19)
+                remoteViews.setViewPadding(R.id.widgetIcon, 40, 0, 0, 0);
 
             appWidgetManager.updateAppWidget(widgetId, remoteViews);
         }

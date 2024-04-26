@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +13,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.DecimalFormat;
@@ -26,15 +26,15 @@ import cz.martykan.forecastie.utils.Formatting;
 import cz.martykan.forecastie.utils.TimeUtils;
 
 public class LocationsRecyclerAdapter extends RecyclerView.Adapter<LocationsRecyclerAdapter.LocationsViewHolder> {
-    private LayoutInflater inflater;
+    private final LayoutInflater inflater;
     private ItemClickListener itemClickListener;
-    private Context context;
-    private ArrayList<Weather> weatherArrayList;
-    private boolean darkTheme;
-    private boolean blackTheme;
-    private boolean decimalZeroes;
-    private String temperatureUnit;
-    private Formatting formatting;
+    private final Context context;
+    private final ArrayList<Weather> weatherArrayList;
+    private final boolean darkTheme;
+    private final boolean blackTheme;
+    private final boolean decimalZeroes;
+    private final String temperatureUnit;
+    private final Formatting formatting;
 
     public LocationsRecyclerAdapter(Context context, ArrayList<Weather> weatherArrayList, boolean darkTheme, boolean blackTheme) {
         this.context = context;
@@ -99,12 +99,12 @@ public class LocationsRecyclerAdapter extends RecyclerView.Adapter<LocationsRecy
     }
 
     class LocationsViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private TextView cityTextView;
-        private TextView temperatureTextView;
-        private TextView descriptionTextView;
-        private TextView iconTextView;
-        private WebView webView;
-        private CardView cardView;
+        private final TextView cityTextView;
+        private final TextView temperatureTextView;
+        private final TextView descriptionTextView;
+        private final TextView iconTextView;
+        private final WebView webView;
+        private final CardView cardView;
 
         LocationsViewHolder(View itemView) {
             super(itemView);

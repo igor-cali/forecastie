@@ -4,12 +4,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Typeface;
-import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.DecimalFormat;
@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import cz.martykan.forecastie.R;
@@ -28,7 +29,7 @@ import cz.martykan.forecastie.utils.TimeUtils;
 import cz.martykan.forecastie.utils.UnitConvertor;
 
 public class WeatherRecyclerAdapter extends RecyclerView.Adapter<WeatherViewHolder> {
-    private List<Weather> itemList;
+    private final List<Weather> itemList;
 
     public WeatherRecyclerAdapter(List<Weather> itemList) {
         this.itemList = itemList;
@@ -75,7 +76,7 @@ public class WeatherRecyclerAdapter extends RecyclerView.Adapter<WeatherViewHold
         }
         String dateString;
         try {
-            SimpleDateFormat resultFormat = new SimpleDateFormat(dateFormat);
+            SimpleDateFormat resultFormat = new SimpleDateFormat(dateFormat, Locale.US);
             resultFormat.setTimeZone(tz);
             dateString = resultFormat.format(weatherItem.getDate());
         } catch (IllegalArgumentException e) {

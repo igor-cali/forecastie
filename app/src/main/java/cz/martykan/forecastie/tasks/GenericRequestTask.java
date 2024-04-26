@@ -6,8 +6,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.preference.PreferenceManager;
 import android.util.Log;
+
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.snackbar.Snackbar;
 
@@ -20,6 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -36,13 +38,13 @@ import cz.martykan.forecastie.weatherapi.WeatherStorage;
 
 public abstract class GenericRequestTask extends AsyncTask<String, String, TaskOutput> {
 
-    ProgressDialog progressDialog;
-    protected Context context;
-    protected MainActivity activity;
-    protected WeatherStorage weatherStorage;
+    final ProgressDialog progressDialog;
+    protected final Context context;
+    protected final MainActivity activity;
+    protected final WeatherStorage weatherStorage;
     public int loading = 0;
 
-    private static CountDownLatch certificateCountDownLatch = new CountDownLatch(0);
+    private static final CountDownLatch certificateCountDownLatch = new CountDownLatch(0);
     private static boolean certificateTried = false;
     private static boolean certificateFetchTried = false;
     private static SSLContext sslContext;
@@ -121,7 +123,7 @@ public abstract class GenericRequestTask extends AsyncTask<String, String, TaskO
                     }
                     certificateCountDownLatch.countDown();
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
                 }
             }
             if (urlConnection.getResponseCode() == 200) {
@@ -156,7 +158,7 @@ public abstract class GenericRequestTask extends AsyncTask<String, String, TaskO
                 output.taskResult = TaskResult.HTTP_ERROR;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
             // Exception while reading data from url connection
             output.taskResult = TaskResult.IO_EXCEPTION;
             output.taskError = e;
@@ -171,7 +173,7 @@ public abstract class GenericRequestTask extends AsyncTask<String, String, TaskO
             response = makeRequest(output, response, reqParams);
             if (output.taskResult == TaskResult.IO_EXCEPTION && output.taskError instanceof IOException) {
                 if (CertificateUtils.isCertificateException((IOException) output.taskError)) {
-                    Log.e("Invalid Certificate", output.taskError.getMessage());
+                    Log.e("Invalid Certificate", Objects.requireNonNull(output.taskError.getMessage()));
                     try {
                         certificateCountDownLatch.await();
                         tryAgain = !certificateTried || !certificateFetchTried;
@@ -188,7 +190,7 @@ public abstract class GenericRequestTask extends AsyncTask<String, String, TaskO
                         certificateCountDownLatch.countDown();
                     } catch (InterruptedException ex) {
                         Log.e("Invalid Certificate", "await had been interrupted");
-                        ex.printStackTrace();
+                        //ex.printStackTrace();
                     }
                 } else {
                     Log.e("IOException Data", response);

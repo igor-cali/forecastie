@@ -14,8 +14,10 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.preference.PreferenceManager;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -118,9 +120,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                 String apiKey = sp.getString("apiKey", context.getResources().getString(R.string.apiKey));
                 URL url = new URL("https://api.openweathermap.org/data/2.5/weather?id=" + URLEncoder.encode(sp.getString("cityId", Constants.DEFAULT_CITY_ID), "UTF-8") + "&lang="+ language +"&appid=" + apiKey);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                BufferedReader connectionBufferedReader = null;
-                try {
-                    connectionBufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                try (BufferedReader connectionBufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) {
                     if (urlConnection.getResponseCode() == 200) {
                         StringBuilder result = new StringBuilder();
                         String line;
@@ -134,8 +134,6 @@ public class AlarmReceiver extends BroadcastReceiver {
                     } else {
                         // Connection problem
                     }
-                } finally {
-                    if (connectionBufferedReader != null) connectionBufferedReader.close();
                 }
             } catch (IOException e) {
                 // No connection
@@ -163,9 +161,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                 String apiKey = sp.getString("apiKey", context.getResources().getString(R.string.apiKey));
                 URL url = new URL("https://api.openweathermap.org/data/2.5/forecast?id=" + URLEncoder.encode(sp.getString("cityId", Constants.DEFAULT_CITY_ID), "UTF-8") + "&lang="+ language +"&mode=json&appid=" + apiKey);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                BufferedReader connectionBufferedReader = null;
-                try {
-                    connectionBufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                try (BufferedReader connectionBufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) {
                     if (urlConnection.getResponseCode() == 200) {
                         StringBuilder result = new StringBuilder();
                         String line;
@@ -178,8 +174,6 @@ public class AlarmReceiver extends BroadcastReceiver {
                     } else {
                         // Connection problem
                     }
-                } finally {
-                    if (connectionBufferedReader != null) connectionBufferedReader.close();
                 }
             } catch (IOException e) {
                 // No connection
@@ -194,8 +188,6 @@ public class AlarmReceiver extends BroadcastReceiver {
 
     public class GetLocationAndWeatherTask extends AsyncTask <String, String, Void> {
         private static final String TAG = "LocationAndWTask";
-
-        private final double MAX_RUNNING_TIME = 30 * 1000;
 
         private LocationManager locationManager;
         private BackgroundLocationListener locationListener;
@@ -222,6 +214,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         protected Void doInBackground(String... params) {
             long startTime = System.currentTimeMillis();
             long runningTime = 0;
+            double MAX_RUNNING_TIME = 30 * 1000;
             while (locationListener.getLocation() == null && runningTime < MAX_RUNNING_TIME) { // Give up after 30 seconds
                 try {
                     Thread.sleep(100);
@@ -255,11 +248,10 @@ public class AlarmReceiver extends BroadcastReceiver {
         }
 
         public class BackgroundLocationListener implements LocationListener {
-            private static final String TAG = "LocationListener";
             private Location location;
 
             @Override
-            public void onLocationChanged(Location location) {
+            public void onLocationChanged(@NonNull Location location) {
                 this.location = location;
             }
 
@@ -269,12 +261,12 @@ public class AlarmReceiver extends BroadcastReceiver {
             }
 
             @Override
-            public void onProviderEnabled(String provider) {
+            public void onProviderEnabled(@NonNull String provider) {
 
             }
 
             @Override
-            public void onProviderDisabled(String provider) {
+            public void onProviderDisabled(@NonNull String provider) {
 
             }
 
@@ -298,14 +290,12 @@ public class AlarmReceiver extends BroadcastReceiver {
 
             try {
                 URL url = new URL("https://api.openweathermap.org/data/2.5/weather?q=&lat=" + lat + "&lon=" + lon + "&lang="+ language +"&appid=" + apiKey);
-                Log.d(TAG, "Request: " + url.toString());
+                Log.d(TAG, "Request: " + url);
 
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
 
                 if (urlConnection.getResponseCode() == 200) {
-                    BufferedReader connectionBufferedReader = null;
-                    try {
-                        connectionBufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                    try (BufferedReader connectionBufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) {
                         StringBuilder result = new StringBuilder();
                         String line;
                         while ((line = connectionBufferedReader.readLine()) != null) {
@@ -327,12 +317,10 @@ public class AlarmReceiver extends BroadcastReceiver {
                         editor.putString("cityId", cityId);
                         editor.putString("city", currentCity);
                         editor.putBoolean("cityChanged", !currentCity.equals(lastCity));
-                        editor.commit();
+                        editor.apply();
 
-                    } catch (JSONException e){
+                    } catch (JSONException e) {
                         Log.e(TAG, "An error occurred while reading the JSON object", e);
-                    } finally {
-                        if (connectionBufferedReader != null) connectionBufferedReader.close();
                     }
                 } else {
                     Log.e(TAG, "Error: Response code " + urlConnection.getResponseCode());
@@ -366,7 +354,7 @@ public class AlarmReceiver extends BroadcastReceiver {
             case 24:
                 return AlarmManager.INTERVAL_DAY;
             default: // cases 2 and 6 (or any number of hours)
-                return interval * 3600000;
+                return interval * 3600000L;
         }
     }
 

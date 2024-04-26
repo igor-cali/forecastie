@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -36,7 +36,6 @@ import cz.martykan.forecastie.weatherapi.WeatherStorage;
 public class AmbiguousLocationDialogFragment extends DialogFragment implements LocationsRecyclerAdapter.ItemClickListener {
 
     private LocationsRecyclerAdapter recyclerAdapter;
-    private SharedPreferences sharedPreferences;
     private WeatherStorage weatherStorage;
 
     @Nullable
@@ -57,17 +56,11 @@ public class AmbiguousLocationDialogFragment extends DialogFragment implements L
         toolbar.setTitle(getString(R.string.location_search_heading));
 
         toolbar.setNavigationIcon(R.drawable.ic_close_black_24dp);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                close();
-            }
-        });
+        toolbar.setNavigationOnClickListener(view1 -> close());
 
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity());
         weatherStorage = new WeatherStorage(getActivity());
 
-        @SuppressWarnings("ConstantConditions")
         final int theme = getTheme(sharedPreferences.getString("theme", "fresh"));
         final boolean darkTheme = theme == R.style.AppTheme_NoActionBar_Dark ||
                 theme == R.style.AppTheme_NoActionBar_Classic_Dark;
@@ -83,6 +76,7 @@ public class AmbiguousLocationDialogFragment extends DialogFragment implements L
         }
 
         try {
+            assert bundle != null;
             final JSONArray cityListArray = new JSONArray(bundle.getString("cityList"));
             final ArrayList<Weather> weatherArrayList = new ArrayList<>();
             recyclerAdapter = new LocationsRecyclerAdapter(view.getContext().getApplicationContext(),
@@ -124,7 +118,7 @@ public class AmbiguousLocationDialogFragment extends DialogFragment implements L
 
 
         } catch (JSONException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 

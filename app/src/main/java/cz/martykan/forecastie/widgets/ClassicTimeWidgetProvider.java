@@ -6,13 +6,15 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.RemoteViews;
+
+import androidx.preference.PreferenceManager;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import cz.martykan.forecastie.AlarmReceiver;
 import cz.martykan.forecastie.R;
@@ -36,7 +38,7 @@ public class ClassicTimeWidgetProvider extends AbstractWidgetProvider {
 
             Intent intent = new Intent(context, AlarmReceiver.class);
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context,
-                    0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             remoteViews.setOnClickPendingIntent(R.id.widgetButtonRefresh, pendingIntent);
 
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
@@ -50,13 +52,14 @@ public class ClassicTimeWidgetProvider extends AbstractWidgetProvider {
             DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(context);
             String defaultDateFormat = context.getResources().getStringArray(R.array.dateFormatsValues)[0];
             String dateFormat = sp.getString("dateFormat", defaultDateFormat);
-            dateFormat = dateFormat.substring(0, dateFormat.indexOf("-")-1);
             if ("custom".equals(dateFormat)) {
                 dateFormat = sp.getString("dateFormatCustom", defaultDateFormat);
             }
+            else
+                dateFormat = dateFormat.substring(0, dateFormat.indexOf("-")-1);
             String dateString;
             try {
-                SimpleDateFormat resultFormat = new SimpleDateFormat(dateFormat);
+                SimpleDateFormat resultFormat = new SimpleDateFormat(dateFormat, Locale.US);
                 dateString = resultFormat.format(new Date());
             } catch (IllegalArgumentException e) {
                 dateString = context.getResources().getString(R.string.error_dateFormat);
@@ -79,7 +82,7 @@ public class ClassicTimeWidgetProvider extends AbstractWidgetProvider {
         if (ACTION_UPDATE_TIME.equals(intent.getAction())) {
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
             ComponentName provider = new ComponentName(context.getPackageName(), getClass().getName());
-            int ids[] = appWidgetManager.getAppWidgetIds(provider);
+            int[] ids = appWidgetManager.getAppWidgetIds(provider);
             onUpdate(context, appWidgetManager, ids);
         } else {
             super.onReceive(context, intent);

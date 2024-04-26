@@ -11,11 +11,11 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.RemoteViews;
 
 import androidx.annotation.Nullable;
+import androidx.preference.PreferenceManager;
 
 import java.text.DecimalFormat;
 import java.util.Calendar;
@@ -40,7 +40,7 @@ public abstract class AbstractWidgetProvider extends AppWidgetProvider {
         if (ACTION_UPDATE_TIME.equals(intent.getAction())) {
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
             ComponentName provider = new ComponentName(context.getPackageName(), getClass().getName());
-            int ids[] = appWidgetManager.getAppWidgetIds(provider);
+            int[] ids = appWidgetManager.getAppWidgetIds(provider);
             onUpdate(context, appWidgetManager, ids);
         } else {
             super.onReceive(context, intent);
@@ -74,7 +74,7 @@ public abstract class AbstractWidgetProvider extends AppWidgetProvider {
             remoteViews.setOnClickPendingIntent(R.id.widgetRoot, pendingIntent);
             pendingIntent.send();
         } catch (PendingIntent.CanceledException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
@@ -134,11 +134,9 @@ public abstract class AbstractWidgetProvider extends AppWidgetProvider {
                     android.text.format.DateFormat.getTimeFormat(context).format(new Date(nextUpdate)));
         }
         */
-        if (Build.VERSION.SDK_INT >= 19) {
-            alarmManager.setExact(AlarmManager.RTC, nextUpdate, getTimeIntent(context));
-        } else {
-            alarmManager.set(AlarmManager.RTC, nextUpdate, getTimeIntent(context));
-        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            alarmManager.canScheduleExactAlarms();
+        alarmManager.setExact(AlarmManager.RTC, nextUpdate, getTimeIntent(context));
     }
 
     protected void cancelUpdate(Context context) {

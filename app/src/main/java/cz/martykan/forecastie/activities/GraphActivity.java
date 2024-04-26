@@ -5,15 +5,13 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.View;
-import android.widget.CompoundButton;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.IdRes;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
+import androidx.preference.PreferenceManager;
 
 import com.db.chart.Tools;
 import com.db.chart.model.BarSet;
@@ -30,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Objects;
 import java.util.TimeZone;
 
 import cz.martykan.forecastie.R;
@@ -43,16 +42,16 @@ public class GraphActivity extends BaseActivity {
 
     private SharedPreferences sp;
 
-    private ArrayList<Weather> weatherList = new ArrayList<>();
+    private final ArrayList<Weather> weatherList = new ArrayList<>();
 
-    private Paint gridPaint = new Paint() {{
+    private final Paint gridPaint = new Paint() {{
         setStyle(Paint.Style.STROKE);
         setAntiAlias(true);
         setPathEffect(new DashPathEffect(new float[]{10, 10}, 0));
         setStrokeWidth(1);
     }};
 
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("E") {{
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("E") {{
         setTimeZone(TimeZone.getDefault());
     }};
 
@@ -73,13 +72,8 @@ public class GraphActivity extends BaseActivity {
 
         Toolbar toolbar = findViewById(R.id.graph_toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         setTheme(theme = UI.getTheme(sp.getString("theme", "fresh")));
         darkTheme = theme == R.style.AppTheme_NoActionBar_Dark ||
@@ -87,22 +81,20 @@ public class GraphActivity extends BaseActivity {
                 theme == R.style.AppTheme_NoActionBar_Classic_Dark ||
                 theme == R.style.AppTheme_NoActionBar_Classic_Black;
 
-        Switch graphSwitch = findViewById(R.id.graph_switch);
+        SwitchCompat graphSwitch = findViewById(R.id.graph_switch);
         graphSwitch.setChecked(sp.getString("graphsMoreDays", "off").equals("on"));
-        graphSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    // show graphs for whole five-day forecast
-                    numWeatherData = weatherList.size();
-                    sp.edit().putString("graphsMoreDays", "on").apply();
-                } else {
-                    // show graphs for only two days
-                    numWeatherData = 2 * weatherList.size() / 5;
-                    sp.edit().putString("graphsMoreDays", "off").apply();
-                }
-
-                updateGraphs();
+        graphSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                // show graphs for whole five-day forecast
+                numWeatherData = weatherList.size();
+                sp.edit().putString("graphsMoreDays", "on").apply();
+            } else {
+                // show graphs for only two days
+                numWeatherData = 2 * weatherList.size() / 5;
+                sp.edit().putString("graphsMoreDays", "off").apply();
             }
+
+            updateGraphs();
         });
 
         TextView temperatureTextView = findViewById(R.id.graph_temperature_textview);
@@ -380,7 +372,7 @@ public class GraphActivity extends BaseActivity {
             weatherList.addAll(parsedWeatherList);
         } catch (JSONException e) {
             Log.e("JSONException Data", result);
-            e.printStackTrace();
+            //e.printStackTrace();
             return ParseResult.JSON_EXCEPTION;
         }
 
