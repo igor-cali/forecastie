@@ -10,38 +10,40 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
-import android.preference.EditTextPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceManager;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.preference.CheckBoxPreference;
+import androidx.preference.EditTextPreference;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+import java.util.Objects;
 
 import cz.martykan.forecastie.AlarmReceiver;
 import cz.martykan.forecastie.R;
 import cz.martykan.forecastie.notifications.WeatherNotificationService;
 import cz.martykan.forecastie.utils.UI;
 
-public class SettingsActivity extends PreferenceActivity
-        implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class SettingsActivity extends AppCompatActivity
+    implements SharedPreferences.OnSharedPreferenceChangeListener {
     protected static final int MY_PERMISSIONS_FOREGROUND_SERVICE = 2;
 
     // Thursday 2016-01-14 16:00:00
-    private Date SAMPLE_DATE = new Date(1452805200000L);
+    private final Date SAMPLE_DATE = new Date(1452805200000L);
+    private PF pf;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         int theme;
         setTheme(theme = UI.getTheme(PreferenceManager.getDefaultSharedPreferences(this).getString("theme", "fresh")));
 
@@ -52,26 +54,34 @@ public class SettingsActivity extends PreferenceActivity
 
         UI.setNavigationBarMode(SettingsActivity.this, darkTheme, blackTheme);
 
-        super.onCreate(savedInstanceState);
-
-        LinearLayout root = (LinearLayout) findViewById(android.R.id.list).getParent().getParent().getParent();
-        View bar = LayoutInflater.from(this).inflate(R.layout.settings_toolbar, root, false);
-        root.addView(bar, 0);
+        setContentView(R.layout.settings_toolbar);
         Toolbar toolbar = (Toolbar) findViewById(R.id.settings_toolbar);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        toolbar.setNavigationOnClickListener(v -> finish());
 
-        addPreferencesFromResource(R.xml.prefs);
+        try {
+            pf = new PF();
+            getClass().getMethod("getFragmentManager");
+            getSupportFragmentManager().beginTransaction().replace(android.R.id.content,
+                    pf).commit();
+        } catch (NoSuchMethodException e) { //Api < 11
+
+        }
+
     }
+
+        public static class PF extends PreferenceFragmentCompat {
+            @Override
+            public void onCreatePreferences(Bundle bundle, String S) {
+
+                addPreferencesFromResource(R.xml.prefs);
+
+            }
+        }
 
     @Override
     public void onResume(){
         super.onResume();
-        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+        Objects.requireNonNull(pf.getPreferenceScreen().getSharedPreferences()).registerOnSharedPreferenceChangeListener(this);
 
         setCustomDateEnabled();
         updateDateFormatList();
@@ -90,13 +100,13 @@ public class SettingsActivity extends PreferenceActivity
     @Override
     public void onPause(){
         super.onPause();
-        getPreferenceScreen().getSharedPreferences()
+        Objects.requireNonNull(pf.getPreferenceScreen().getSharedPreferences())
                 .unregisterOnSharedPreferenceChangeListener(this);
     }
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        switch (key) {
+        switch (Objects.requireNonNull(key)) {
             case "unit":
             case "lengthUnit":
             case "speedUnit":
@@ -178,10 +188,13 @@ public class SettingsActivity extends PreferenceActivity
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
         switch (requestCode) {
             case MainActivity.MY_PERMISSIONS_ACCESS_FINE_LOCATION:
                 boolean permissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                CheckBoxPreference checkBox = (CheckBoxPreference) findPreference("updateLocationAutomatically");
+                CheckBoxPreference checkBox = (CheckBoxPreference) pf.findPreference("updateLocationAutomatically");
+                assert checkBox != null;
                 checkBox.setChecked(permissionGranted);
                 if (permissionGranted) {
                     privacyGuardWorkaround();
@@ -193,7 +206,8 @@ public class SettingsActivity extends PreferenceActivity
                 } else {
                     String enableNotificationKey = getString(R.string.settings_enable_notification_key);
                     CheckBoxPreference notificationCheckBox =
-                            (CheckBoxPreference) findPreference(enableNotificationKey);
+                            (CheckBoxPreference) pf.findPreference(enableNotificationKey);
+                    assert notificationCheckBox != null;
                     notificationCheckBox.setChecked(false);
                 }
                 break;
@@ -221,13 +235,16 @@ public class SettingsActivity extends PreferenceActivity
     }
 
     private void setListPreferenceSummary(String preferenceKey) {
-        ListPreference preference = (ListPreference) findPreference(preferenceKey);
+        ListPreference preference = (ListPreference) pf.findPreference(preferenceKey);
+        assert preference != null;
         preference.setSummary(preference.getEntry());
     }
 
     private void setCustomDateEnabled() {
-        SharedPreferences sp = getPreferenceScreen().getSharedPreferences();
-        Preference customDatePref = findPreference("dateFormatCustom");
+        SharedPreferences sp = pf.getPreferenceScreen().getSharedPreferences();
+        Preference customDatePref = pf.findPreference("dateFormatCustom");
+        assert customDatePref != null;
+        assert sp != null;
         customDatePref.setEnabled("custom".equals(sp.getString("dateFormat", "")));
     }
 
@@ -235,14 +252,15 @@ public class SettingsActivity extends PreferenceActivity
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         Resources res = getResources();
 
-        ListPreference dateFormatPref = (ListPreference) findPreference("dateFormat");
+        ListPreference dateFormatPref = (ListPreference) pf.findPreference("dateFormat");
         String[] dateFormatsValues = res.getStringArray(R.array.dateFormatsValues);
         String[] dateFormatsEntries = new String[dateFormatsValues.length];
 
-        EditTextPreference customDateFormatPref = (EditTextPreference) findPreference("dateFormatCustom");
+        EditTextPreference customDateFormatPref = (EditTextPreference) pf.findPreference("dateFormatCustom");
+        assert customDateFormatPref != null;
         customDateFormatPref.setDefaultValue(dateFormatsValues[0]);
 
-        SimpleDateFormat sdformat = new SimpleDateFormat();
+        SimpleDateFormat sdformat = new SimpleDateFormat("dd/MM/yy HH:mm", Locale.US);
         for (int i=0; i<dateFormatsValues.length; i++) {
             String value = dateFormatsValues[i];
             if ("custom".equals(value)) {
@@ -262,6 +280,7 @@ public class SettingsActivity extends PreferenceActivity
             }
         }
 
+        assert dateFormatPref != null;
         dateFormatPref.setDefaultValue(dateFormatsValues[0]);
         dateFormatPref.setEntries(dateFormatsEntries);
 
@@ -270,15 +289,15 @@ public class SettingsActivity extends PreferenceActivity
 
     private void checkKey(String key){
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        if (sp.getString(key, "").equals("")){
+        if (sp.getString(key, "").isEmpty()){
             sp.edit().remove(key).apply();
         }
     }
 
-    public class DummyLocationListener implements LocationListener {
+    public static class DummyLocationListener implements LocationListener {
 
         @Override
-        public void onLocationChanged(Location location) {
+        public void onLocationChanged(@NonNull Location location) {
 
         }
 
@@ -288,12 +307,12 @@ public class SettingsActivity extends PreferenceActivity
         }
 
         @Override
-        public void onProviderEnabled(String provider) {
+        public void onProviderEnabled(@NonNull String provider) {
 
         }
 
         @Override
-        public void onProviderDisabled(String provider) {
+        public void onProviderDisabled(@NonNull String provider) {
 
         }
     }
