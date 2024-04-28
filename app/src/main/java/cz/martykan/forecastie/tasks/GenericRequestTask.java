@@ -20,7 +20,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,7 +28,6 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 
-import cz.martykan.forecastie.Constants;
 import cz.martykan.forecastie.R;
 import cz.martykan.forecastie.activities.MainActivity;
 import cz.martykan.forecastie.utils.Language;
@@ -257,21 +255,29 @@ public abstract class GenericRequestTask {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         String apiKey = sp.getString("apiKey", context.getString(R.string.apiKey));
 
-        StringBuilder urlBuilder = new StringBuilder("https://api.openweathermap.org/data/2.5/");
+        // https://openweathermap.org/one-call-transfer#how
+        // https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude={part}&appid={API key}
+
+//        StringBuilder urlBuilder = new StringBuilder("https://api.openweathermap.org/data/2.5/");
+        StringBuilder urlBuilder = new StringBuilder("https://api.openweathermap.org/data/3.0/");
         urlBuilder.append(getAPIName()).append("?");
         if (reqParams.length > 0) {
             final String zeroParam = reqParams[0];
             if ("coords".equals(zeroParam)) {
                 urlBuilder.append("lat=").append(reqParams[1]).append("&lon=").append(reqParams[2]);
+                urlBuilder.append("&lang=").append(Language.getOwmLanguage());
             } else if ("city".equals(zeroParam)) {
+                urlBuilder = new StringBuilder("https://api.openweathermap.org/geo/1.0/direct?");
                 urlBuilder.append("q=").append(reqParams[1]);
             }
-        } else {
+        }
+        /*
+        else {
             final String cityId = sp.getString("cityId", Constants.DEFAULT_CITY_ID);
             urlBuilder.append("id=").append(URLEncoder.encode(cityId, "UTF-8"));
         }
-        urlBuilder.append("&lang=").append(Language.getOwmLanguage());
-        urlBuilder.append("&mode=json");
+        */
+//        urlBuilder.append("&mode=json");
         urlBuilder.append("&appid=").append(apiKey);
 
         return new URL(urlBuilder.toString());

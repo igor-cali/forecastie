@@ -301,7 +301,9 @@ public class MainActivity extends BaseActivity implements LocationListener {
     }
 
     private void getTodayWeather() {
-        new TodayWeatherTask(this, this, progressBar).execute(null, (String) null);
+        double latitude = weatherStorage.getLatitude(Constants.DEFAULT_LAT);
+        double longitude = weatherStorage.getLongitude(Constants.DEFAULT_LON);
+        new TodayWeatherTask(this, this, progressBar).execute(null, "coords", Double.toString(latitude), Double.toString(longitude));
     }
 
     private void getLongTermWeather() {
@@ -742,7 +744,8 @@ public class MainActivity extends BaseActivity implements LocationListener {
 
         @Override
         protected String getAPIName() {
-            return "weather";
+//            return "weather";
+            return "onecall";
         }
 
         @Override
@@ -785,6 +788,7 @@ public class MainActivity extends BaseActivity implements LocationListener {
         @Override
         protected ParseResult parseResponse(String response) {
             try {
+                /*
                 JSONObject reader = new JSONObject(response);
 
                 final int count = reader.optInt("count");
@@ -792,9 +796,11 @@ public class MainActivity extends BaseActivity implements LocationListener {
                     Log.e("Geolocation", "No city found");
                     return ParseResult.CITY_NOT_FOUND;
                 }
+                */
 
 //                saveLocation(reader.getString("id"));
-                final JSONArray cityList = reader.getJSONArray("list");
+//                final JSONArray cityList = reader.getJSONArray("list");
+                final JSONArray cityList = new JSONArray(response);
 
                 if (cityList.length() > 1) {
                     launchLocationPickerDialog(cityList);
